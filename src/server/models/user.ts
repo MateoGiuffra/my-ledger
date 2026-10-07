@@ -8,6 +8,8 @@ export interface IUser {
   googleTokens?: { enc: string };
   pushTokens: string[];
   alertPrefs?: { types: string[]; hour: number };
+  failedLogins?: number;
+  lockedUntil?: Date | null;
 }
 
 export const User = defineModel<IUser>("User", {
@@ -21,6 +23,8 @@ export const User = defineModel<IUser>("User", {
   },
   googleTokens: { enc: String },
   pushTokens: { type: [String], default: [] },
+  failedLogins: { type: Number, default: 0 },
+  lockedUntil: { type: Date, default: null },
   alertPrefs: {
     types: { type: [String], default: ["commitment", "savings", "payday", "debt"] },
     hour: { type: Number, default: 9 },

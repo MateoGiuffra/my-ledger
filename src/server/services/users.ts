@@ -22,13 +22,28 @@ export async function registerUser(username: string, password: string) {
   return { id: String(user._id), username: user.username };
 }
 
-export async function verifyCredentials(username: string, password: string) {
+export const MAX_FAILED_LOGINS = 5;
+export const LOCK_MINUTES = 15;
+
+/** Rate-limit de login (FT-AUTH-3): 5 fallos seguidos bloquean el usuario 15 minutos. */
+export async function verifyCredentials(username: string, password: string, now = new Date()) {
   await connectDb();
   const user = await User.findOne({ username: username.trim().toLowerCase() });
   // comparar siempre para no filtrar por timing si el usuario no existe
   const hash = user?.passwordHash ?? "$2b$12$invalidinvalidinvalidinvalidinvalidinvalidinvalidinvalidi";
   const ok = await bcrypt.compare(password, hash);
-  if (!user || !ok) return null;
+  if (!user) return null;
+  if (user.lockedUntil && user.lockedUntil > now) return null;
+  if (!ok) {
+    const failed = (user.failedLogins ?? 0) + 1;
+    const lock = failed >= MAX_FAILED_LOGINS;
+    await User.updateOne(
+      { _id: user._id },
+      { $set: { failedLogins: lock ? 0 : failed, lockedUntil: lock ? new Date(now.getTime() + LOCK_MINUTES * 60000) : null } },
+    );
+    return null;
+  }
+  if (user.failedLogins || user.lockedUntil) await User.updateOne({ _id: user._id }, { $set: { failedLogins: 0, lockedUntil: null } });
   return { id: String(user._id), username: user.username };
 }
 
