@@ -6,7 +6,7 @@ import { byCategory, dailyProjection, lastMonths, monthlySeries, pctChange, prev
 
 async function loadRange(userId: string, from: Date, to: Date) {
   return Transaction.find({ userId, deletedAt: null, date: { $gte: from, $lt: to } })
-    .select("type amountCents currency date categoryId merchant rawDescription internal")
+    .select("type amountCents currency date categoryId merchant rawDescription internal refund")
     .lean<ITransaction[]>() as unknown as Promise<TxLite[]>;
 }
 

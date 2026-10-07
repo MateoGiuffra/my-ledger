@@ -1,5 +1,6 @@
 import { Account } from "../models/account";
 import { Category } from "../models/category";
+import { seedSuggestedRules } from "./rules";
 
 export const DEFAULT_ACCOUNTS = [
   { name: "Mercado Pago", type: "mp", currency: "ARS" },
@@ -32,5 +33,8 @@ export async function seedDefaults(userId: string) {
     Category.countDocuments({ userId }),
   ]);
   if (!accs) await Account.insertMany(DEFAULT_ACCOUNTS.map((a) => ({ ...a, userId })));
-  if (!cats) await Category.insertMany(DEFAULT_CATEGORIES.map((c) => ({ ...c, userId })));
+  if (!cats) {
+    await Category.insertMany(DEFAULT_CATEGORIES.map((c) => ({ ...c, userId })));
+    await seedSuggestedRules(userId);
+  }
 }

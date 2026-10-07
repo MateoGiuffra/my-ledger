@@ -99,6 +99,11 @@ export function TxForm({
       <Input name="note" placeholder="Nota" defaultValue={defaults.note} maxLength={500} />
       <Input name="fx" placeholder="Cotización (solo USD, opcional)" inputMode="decimal" defaultValue={defaults.fx} />
 
+      {isEdit && (
+        <label className="flex items-center gap-2 text-sm">
+          <input type="checkbox" name="createRule" /> Crear regla para movimientos similares (comercio → categoría)
+        </label>
+      )}
       {state?.error && <p role="alert" className="text-sm text-destructive">{state.error}</p>}
       <div className="flex gap-2">
         <Button type="submit" name="intent" value="save" disabled={pending} className="h-11 flex-1">Guardar</Button>

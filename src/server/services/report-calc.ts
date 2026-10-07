@@ -9,6 +9,7 @@ export interface TxLite {
   merchant?: string;
   rawDescription?: string;
   internal?: boolean;
+  refund?: boolean;
 }
 
 /** Solo ARS y no internos cuentan para gasto/ingreso. */
@@ -20,7 +21,8 @@ export function summarize(txs: TxLite[], savingsCategoryIds: Set<string> = new S
   let savingsCents = 0;
   for (const t of txs) {
     if (!counts(t)) continue;
-    if (t.type === "income") incomeCents += t.amountCents;
+    if (t.type === "income" && t.refund) expenseCents -= t.amountCents; // devolución: netea el gasto
+    else if (t.type === "income") incomeCents += t.amountCents;
     else if (t.categoryId && savingsCategoryIds.has(String(t.categoryId))) savingsCents += t.amountCents;
     else expenseCents += t.amountCents;
   }
@@ -30,10 +32,10 @@ export function summarize(txs: TxLite[], savingsCategoryIds: Set<string> = new S
 export function byCategory(txs: TxLite[], names: Map<string, string>, savingsCategoryIds: Set<string> = new Set()) {
   const acc = new Map<string, number>();
   for (const t of txs) {
-    if (!counts(t) || t.type !== "expense") continue;
+    if (!counts(t) || (t.type !== "expense" && !(t.type === "income" && t.refund))) continue;
     if (t.categoryId && savingsCategoryIds.has(String(t.categoryId))) continue;
     const k = t.categoryId ? String(t.categoryId) : "";
-    acc.set(k, (acc.get(k) ?? 0) + t.amountCents);
+    acc.set(k, (acc.get(k) ?? 0) + (t.type === "income" ? -t.amountCents : t.amountCents));
   }
   return [...acc.entries()]
     .map(([id, totalCents]) => ({ categoryId: id || null, name: id ? (names.get(id) ?? "?") : "Sin categoría", totalCents }))
@@ -43,9 +45,9 @@ export function byCategory(txs: TxLite[], names: Map<string, string>, savingsCat
 export function topMerchants(txs: TxLite[], limit = 10) {
   const acc = new Map<string, number>();
   for (const t of txs) {
-    if (!counts(t) || t.type !== "expense") continue;
+    if (!counts(t) || (t.type !== "expense" && !(t.type === "income" && t.refund))) continue;
     const name = (t.merchant || t.rawDescription || "Sin nombre").trim();
-    acc.set(name, (acc.get(name) ?? 0) + t.amountCents);
+    acc.set(name, (acc.get(name) ?? 0) + (t.type === "income" ? -t.amountCents : t.amountCents));
   }
   return [...acc.entries()].map(([name, totalCents]) => ({ name, totalCents })).sort((a, b) => b.totalCents - a.totalCents).slice(0, limit);
 }

@@ -24,6 +24,8 @@ export interface ITransaction {
   importBatchId?: string | null;
   /** Marca de "movimiento interno" (ej. dinero reservado) que no cuenta como gasto/ingreso. */
   internal?: boolean;
+  /** Devolución: un ingreso que netea el gasto original (resta de gastos en vez de sumar a ingresos). */
+  refund?: boolean;
   deletedAt?: Date | null;
 }
 
@@ -47,6 +49,7 @@ export const Transaction = defineModel<ITransaction>(
     dedupeHash: { type: String, required: true },
     importBatchId: { type: ObjectId, default: null },
     internal: { type: Boolean, default: false },
+    refund: { type: Boolean, default: false },
     deletedAt: { type: Date, default: null },
   },
   {},

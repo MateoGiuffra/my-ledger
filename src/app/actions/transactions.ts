@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { transactionFormSchema } from "@/lib/validators/transaction";
 import { requireUserId } from "@/server/session";
+import { createRule } from "@/server/services/rules";
 import { createTransaction, deleteTransaction, updateTransaction } from "@/server/services/transactions";
 import type { FormState } from "./auth";
 
@@ -33,6 +34,10 @@ export async function updateTxAction(id: string, _: FormState, fd: FormData): Pr
     categoryId: r.data.categoryId ?? null,
     accountId: r.data.accountId ?? null,
   });
+  // FT-CAT-3: al recategorizar, ofrecer regla para movimientos similares
+  if (fd.get("createRule") === "on" && r.data.categoryId && r.data.merchant) {
+    await createRule(userId, { pattern: r.data.merchant, categoryId: r.data.categoryId });
+  }
   revalidatePath("/", "layout");
   redirect("/movimientos");
 }

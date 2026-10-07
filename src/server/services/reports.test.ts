@@ -58,3 +58,13 @@ describe("reportes", () => {
     expect(monthlyBudgetCents({ incomeCents: 180000000, usdSp500: 100, usdSavings: 525, fxPlan: 1547 })).toBe(180000000 - 96687500);
   });
 });
+
+test("devolución netea el gasto en total y categoría", () => {
+  const txs = [
+    tx({ amountCents: 10000, categoryId: "c1", merchant: "EBANX" }),
+    tx({ type: "income", refund: true, amountCents: 4000, categoryId: "c1", merchant: "EBANX" }),
+  ];
+  expect(summarize(txs)).toEqual({ incomeCents: 0, expenseCents: 6000, savingsCents: 0 });
+  expect(byCategory(txs, new Map([["c1", "Ocio"]]))).toEqual([{ categoryId: "c1", name: "Ocio", totalCents: 6000 }]);
+  expect(topMerchants(txs)).toEqual([{ name: "EBANX", totalCents: 6000 }]);
+});

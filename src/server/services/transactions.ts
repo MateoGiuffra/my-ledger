@@ -19,6 +19,7 @@ export interface TxInput {
   externalId?: string;
   importBatchId?: string | null;
   internal?: boolean;
+  refund?: boolean;
 }
 
 /** Hash estable para dedupe: por id externo si existe, si no por fecha+monto+descripción. */
@@ -92,13 +93,14 @@ export async function listTransactions(userId: string, f: TxFilters, page = 1, p
   const [items, total, all] = await Promise.all([
     Transaction.find(query).sort({ date: -1, _id: -1 }).skip((page - 1) * pageSize).limit(pageSize).lean<ITransaction[]>(),
     Transaction.countDocuments(query),
-    Transaction.find(query).select("type amountCents currency internal").lean<Pick<ITransaction, "type" | "amountCents" | "currency" | "internal">[]>(),
+    Transaction.find(query).select("type amountCents currency internal refund").lean<Pick<ITransaction, "type" | "amountCents" | "currency" | "internal" | "refund">[]>(),
   ]);
   let expenseCents = 0;
   let incomeCents = 0;
   for (const t of all) {
     if (t.currency !== "ARS" || t.internal) continue;
     if (t.type === "expense") expenseCents += t.amountCents;
+    else if (t.type === "income" && t.refund) expenseCents -= t.amountCents;
     else if (t.type === "income") incomeCents += t.amountCents;
   }
   return { items: plain(items), total, pages: Math.max(1, Math.ceil(total / pageSize)), page, totals: { expenseCents, incomeCents } };
