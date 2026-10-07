@@ -6,6 +6,7 @@ const optDate = z.preprocess((v) => (v === "" || v == null ? undefined : v), dat
 
 export const commitmentFormSchema = z.object({
   name: z.string().trim().min(1, "Nombre requerido").max(100),
+  kind: z.enum(["expense", "income"]).default("expense"),
   amount: amountField,
   currency: z.enum(["ARS", "USD"]).default("ARS"),
   frequency: z.enum(["once", "weekly", "monthly"]),

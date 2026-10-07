@@ -24,6 +24,7 @@ export default async function EditarCompromisoPage(props: PageProps<"/compromiso
         googleConnected={g}
         defaults={{
           name: c.name,
+          kind: c.kind ?? "expense",
           amount: String(c.amountCents / 100).replace(".", ","),
           currency: c.currency,
           frequency: c.frequency,

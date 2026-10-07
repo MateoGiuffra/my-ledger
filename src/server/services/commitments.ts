@@ -11,6 +11,7 @@ export class CommitmentError extends Error {}
 
 export interface CommitmentInput {
   name: string;
+  kind?: "expense" | "income";
   amountCents: number;
   currency?: "ARS" | "USD";
   frequency: ICommitment["frequency"];
@@ -124,6 +125,7 @@ export interface UpcomingItem {
   name: string;
   amountCents: number;
   currency: "ARS" | "USD";
+  kind: "expense" | "income";
   dueDate: string;
   overdue: boolean;
   status: ICommitmentOccurrence["status"];
@@ -137,7 +139,7 @@ export async function upcoming(userId: string, days = 30, today = todayAr()): Pr
   return occs.flatMap((o) => {
     const c = byId.get(String(o.commitmentId));
     if (!c) return [];
-    return [{ _id: String(o._id), commitmentId: String(c._id), name: c.name, amountCents: c.amountCents, currency: c.currency, dueDate: new Date(o.dueDate).toISOString().slice(0, 10), overdue: new Date(o.dueDate) < today, status: o.status }];
+    return [{ _id: String(o._id), commitmentId: String(c._id), name: c.name, amountCents: c.amountCents, currency: c.currency, kind: c.kind ?? "expense", dueDate: new Date(o.dueDate).toISOString().slice(0, 10), overdue: new Date(o.dueDate) < today, status: o.status }];
   });
 }
 
@@ -147,15 +149,16 @@ export async function markPaid(userId: string, occId: string, opts: { amountCent
   if (!o) throw new CommitmentError("Vencimiento inexistente o ya procesado");
   const c = await Commitment.findOne({ _id: o.commitmentId, userId }).lean<ICommitment>();
   if (!c) throw new CommitmentError("Compromiso inexistente");
+  const isIncome = c.kind === "income";
   const tx = await createTransaction(userId, {
-    type: "expense",
+    type: isIncome ? "income" : "expense",
     amountCents: opts.amountCents ?? c.amountCents,
     currency: c.currency,
     date: opts.date ?? today,
     accountId: c.accountId ? String(c.accountId) : null,
     categoryId: c.categoryId ? String(c.categoryId) : null,
     merchant: c.name,
-    note: "Compromiso pagado",
+    note: isIncome ? "Cobro confirmado" : "Compromiso pagado",
     source: "commitment",
   });
   // update condicional: evita doble pago por doble tap
@@ -193,4 +196,22 @@ export async function calendarMonth(userId: string, month: string, today = today
     (byDay[k] ??= []).push({ name: names.get(String(o.commitmentId)) ?? "?", status: o.status });
   }
   return byDay;
+}
+
+/** FT-MOV-4 / FT-COM-6: carga "Sueldo" y las transferencias del plan a Cocos (editables). Solo si no hay compromisos. */
+export async function seedPlanCommitments(userId: string, today = todayAr()) {
+  if (await Commitment.countDocuments({ userId, deletedAt: null })) return 0;
+  const [{ Category }, { getPlan }] = await Promise.all([import("../models/category"), import("./savings")]);
+  const [plan, cats] = await Promise.all([getPlan(userId), Category.find({ userId, deletedAt: null }).lean<{ _id: string; name: string }[]>()]);
+  const cat = (n: string) => cats.find((c) => c.name === n)?._id ?? null;
+  const start = dateOnly(today.getUTCFullYear(), today.getUTCMonth() + 1, 1);
+  const base = { frequency: "monthly" as const, dayOfMonth: 1, startDate: start, endDate: null, reminders: [1, 0] };
+  const planned = [
+    { name: "Sueldo", kind: "income" as const, amountCents: plan.incomeCents, currency: "ARS" as const, categoryId: cat("Ingresos") },
+    { name: "Cocos: S&P 500", kind: "expense" as const, amountCents: Math.round(plan.usdSp500 * 100), currency: "USD" as const, categoryId: cat("Ahorro") },
+    { name: "Cocos: dólares", kind: "expense" as const, amountCents: Math.round(plan.usdSavings * plan.pctUsd * 100), currency: "USD" as const, categoryId: cat("Ahorro") },
+    { name: "Cocos: pesos plus", kind: "expense" as const, amountCents: Math.round(plan.usdSavings * (1 - plan.pctUsd) * plan.fxPlan * 100), currency: "ARS" as const, categoryId: cat("Ahorro") },
+  ];
+  for (const p of planned) await createCommitment(userId, { ...base, ...p }, today);
+  return planned.length;
 }

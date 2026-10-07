@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { commitmentFormSchema } from "@/lib/validators/commitment";
-import { CommitmentError, createCommitment, deleteCommitment, markPaid, postponeOccurrence, skipOccurrence, updateCommitment, type CommitmentInput } from "@/server/services/commitments";
+import { CommitmentError, createCommitment, deleteCommitment, markPaid, postponeOccurrence, seedPlanCommitments, skipOccurrence, updateCommitment, type CommitmentInput } from "@/server/services/commitments";
 import { requireUserId } from "@/server/session";
 import type { FormState } from "./auth";
 
@@ -16,6 +16,7 @@ function parse(fd: FormData): { data: CommitmentInput } | { error: string } {
   return {
     data: {
       name: d.name,
+      kind: d.kind,
       amountCents: d.amount,
       currency: d.currency,
       frequency: d.frequency,
@@ -89,4 +90,10 @@ export async function skipOccurrenceAction(fd: FormData) {
 export async function postponeOccurrenceAction(fd: FormData) {
   const userId = await requireUserId();
   await guard(() => postponeOccurrence(userId, occ.parse(fd.get("id")), 7));
+}
+
+export async function seedPlanCommitmentsAction() {
+  const userId = await requireUserId();
+  await seedPlanCommitments(userId);
+  revalidatePath("/", "layout");
 }

@@ -16,8 +16,8 @@ export function UpcomingList({ items, compact = false }: { items: UpcomingItem[]
               <p className={`text-xs ${o.overdue ? "text-red-600" : "text-muted-foreground"}`}>{o.overdue ? "Vencido · " : ""}{formatDate(new Date(o.dueDate + "T12:00:00Z"))}</p>
             </div>
             <div className="flex items-center gap-2">
-              <span className="font-semibold">{formatMoney(o.amountCents, o.currency)}</span>
-              <form action={payOccurrenceAction}><input type="hidden" name="id" value={o._id} /><Button size="sm" type="submit">Pagado</Button></form>
+              <span className={`font-semibold ${o.kind === "income" ? "text-green-600" : ""}`}>{o.kind === "income" ? "+" : ""}{formatMoney(o.amountCents, o.currency)}</span>
+              <form action={payOccurrenceAction}><input type="hidden" name="id" value={o._id} /><Button size="sm" type="submit">{o.kind === "income" ? "Cobrado" : "Pagado"}</Button></form>
             </div>
           </div>
           {!compact && (

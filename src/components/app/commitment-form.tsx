@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 
 export interface CommitmentDefaults {
   name: string;
+  kind: "expense" | "income";
   amount: string;
   currency: "ARS" | "USD";
   frequency: "once" | "weekly" | "monthly";
@@ -38,6 +39,7 @@ export function CommitmentForm({
   const [freq, setFreq] = useState(defaults.frequency);
   return (
     <form action={formAction} className="space-y-3">
+      <select name="kind" defaultValue={defaults.kind} className={SELECT} aria-label="Tipo"><option value="expense">Pago (egreso)</option><option value="income">Cobro (ingreso, ej. Sueldo)</option></select>
       <Input name="name" placeholder="Nombre (ej. Tarjeta)" defaultValue={defaults.name} required maxLength={100} />
       <div className="flex gap-2">
         <Input name="amount" inputMode="decimal" placeholder="Monto" defaultValue={defaults.amount} required aria-label="Monto" className="text-lg" />

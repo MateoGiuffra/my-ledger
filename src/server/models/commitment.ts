@@ -6,6 +6,8 @@ export interface ICommitment {
   _id: string;
   userId: string;
   name: string;
+  /** expense: se paga; income: se cobra (ej. Sueldo). */
+  kind: "expense" | "income";
   amountCents: number;
   currency: "ARS" | "USD";
   frequency: Frequency;
@@ -27,6 +29,7 @@ export interface ICommitment {
 export const Commitment = defineModel<ICommitment>("Commitment", {
   userId: { type: ObjectId, required: true, index: true },
   name: { type: String, required: true, trim: true },
+  kind: { type: String, enum: ["expense", "income"], default: "expense" },
   amountCents: { type: Number, required: true, min: 0 },
   currency: { type: String, enum: ["ARS", "USD"], default: "ARS" },
   frequency: { type: String, enum: ["once", "weekly", "monthly"], required: true },

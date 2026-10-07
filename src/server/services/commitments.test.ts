@@ -129,3 +129,10 @@ test("buildEventBody de un compromiso único no lleva recurrencia", () => {
   expect(b).not.toHaveProperty("recurrence");
   expect(b.start.dateTime).toBe("2026-11-03T09:00:00");
 });
+
+test("un cobro recurrente (Sueldo) genera un ingreso al confirmarlo", async () => {
+  await createCommitment(uid, { name: "Sueldo", kind: "income", amountCents: 180000000, frequency: "monthly", dayOfMonth: 10, startDate: dateOnly(2026, 10, 1) }, today);
+  const [o] = await upcoming(uid, 10, today);
+  expect(o).toMatchObject({ kind: "income", name: "Sueldo" });
+  expect(await markPaid(uid, o._id, {}, today)).toMatchObject({ type: "income", amountCents: 180000000, note: "Cobro confirmado" });
+});

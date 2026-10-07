@@ -16,7 +16,7 @@ export default async function NuevoCompromisoPage() {
         categories={categories}
         accounts={accounts}
         googleConnected={g}
-        defaults={{ name: "", amount: "", currency: "ARS", frequency: "monthly", startDate: todayAr().toISOString().slice(0, 10), reminders: [3, 1, 0], gcalSync: g }}
+        defaults={{ name: "", kind: "expense", amount: "", currency: "ARS", frequency: "monthly", startDate: todayAr().toISOString().slice(0, 10), reminders: [3, 1, 0], gcalSync: g }}
       />
     </div>
   );

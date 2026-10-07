@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { seedPlanCommitmentsAction } from "@/app/actions/commitments";
+import { Button } from "@/components/ui/button";
 import { UpcomingList } from "@/components/app/upcoming-list";
 import { MonthNav } from "@/components/app/month-nav";
 import { Badge } from "@/components/ui/badge";
@@ -76,6 +78,9 @@ export default async function CompromisosPage(props: PageProps<"/compromisos">) 
           ))}
           {shown.length === 0 && <li className="py-4 text-center text-muted-foreground">Nada por acá.</li>}
         </ul>
+        {list.length === 0 && (
+          <form action={seedPlanCommitmentsAction}><Button type="submit" variant="outline" className="w-full">Cargar sueldo y transferencias del plan</Button></form>
+        )}
       </section>
     </div>
   );
