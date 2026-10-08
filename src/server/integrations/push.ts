@@ -17,11 +17,11 @@ interface ServiceAccount {
 }
 
 export function pushConfigured(): boolean {
-  return !!process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
+  return !!process.env.GOOGLE_SERVICE_ACCOUNT_BASE64;
 }
 
 function serviceAccount(): ServiceAccount {
-  return JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON!);
+  return JSON.parse(Buffer.from(process.env.GOOGLE_SERVICE_ACCOUNT_BASE64!, "base64").toString("utf8"));
 }
 
 /** FCM HTTP v1 con la service account (sin firebase-admin). Mensaje solo de datos: lo muestra nuestro service worker. */

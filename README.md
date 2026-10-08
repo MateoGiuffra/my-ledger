@@ -30,7 +30,7 @@ pnpm dev                     # http://localhost:3000
 | `CRON_SECRET` | Protege `/api/cron/alerts` |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI` | Google Calendar (OAuth2) |
 | `NEXT_PUBLIC_FIREBASE_*` (API_KEY, PROJECT_ID, MESSAGING_SENDER_ID, APP_ID, VAPID_KEY) | Push, lado cliente |
-| `FIREBASE_SERVICE_ACCOUNT_JSON` | Push, lado servidor (JSON de la service account en una línea) |
+| `GOOGLE_SERVICE_ACCOUNT_BASE64` | Push, lado servidor (JSON de la service account en base64) |
 
 Sin las claves de Google / Firebase la app funciona igual: solo quedan desactivados Calendar y el push (las alertas siguen apareciendo dentro de la app).
 
@@ -92,7 +92,7 @@ pnpm lint
 ## Qué tenés que cargar vos a mano
 
 1. **Google Calendar**: crear un proyecto en Google Cloud, habilitar *Google Calendar API*, crear credenciales OAuth (aplicación web), agregar como redirect `https://TU_DOMINIO/api/google/callback` (y `http://localhost:3000/api/google/callback`) y completar `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI`. Después, en la app: Configuración → Google Calendar → Conectar.
-2. **Firebase (push)**: crear un proyecto, agregar una app web y copiar la config a `NEXT_PUBLIC_FIREBASE_API_KEY / PROJECT_ID / MESSAGING_SENDER_ID / APP_ID`; en Cloud Messaging generar la clave **VAPID** (`NEXT_PUBLIC_FIREBASE_VAPID_KEY`); crear una service account con permiso de *Firebase Cloud Messaging API* y pegar su JSON (en una sola línea) en `FIREBASE_SERVICE_ACCOUNT_JSON`. Después, en la app: Configuración → Notificaciones → Activar (en iPhone la PWA tiene que estar instalada en la pantalla de inicio).
+2. **Firebase (push)**: crear un proyecto, agregar una app web y copiar la config a `NEXT_PUBLIC_FIREBASE_API_KEY / PROJECT_ID / MESSAGING_SENDER_ID / APP_ID`; en Cloud Messaging generar la clave **VAPID** (`NEXT_PUBLIC_FIREBASE_VAPID_KEY`); crear una service account con permiso de *Firebase Cloud Messaging API* y codificar su JSON en base64 y pegarlo en `GOOGLE_SERVICE_ACCOUNT_BASE64`. Después, en la app: Configuración → Notificaciones → Activar (en iPhone la PWA tiene que estar instalada en la pantalla de inicio).
 3. **`MONGODB_URI`** si usás Atlas (con el IP allow-list de donde corra la app).
 4. En producción: `AUTH_SECRET`, `AUTH_URL`, `ENCRYPTION_KEY`, `CRON_SECRET`, `ALLOW_REGISTER=false`, y los secrets `APP_URL` / `CRON_SECRET` en GitHub Actions si querés el cron horario.
 
